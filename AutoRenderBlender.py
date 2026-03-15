@@ -7,11 +7,12 @@ output_dir = scene.render.filepath
 
 # 5 directions
 directions = {
-    "N": 0,
-    "NE": 45,
-    "E": 90,
-    "SE": 135,
-    "S": 180,
+    # Optional, check Z rotating camera.
+    "N": -90,
+    "NE": -135,
+    "E": -180,
+    "SE": -225,
+    "S": -270,
 }
 
 # Parts inside armature
@@ -21,6 +22,9 @@ parts = [
     "Head",
     "LeftHand",
     "RightHand",
+    "LeftTool",
+    "RightTool",
+    "Bag",
 ]
 
 frame_count = scene.frame_end - scene.frame_start + 1
@@ -64,7 +68,8 @@ for part in parts:
 
             scene.frame_set(frame)
 
-            filename = f"{part}_{dir_name}_{frame_global:04d}.png"
+            # filename = f"{part}_{dir_name}_{frame_global:04d}.png"
+            filename = f"{part}_{frame_global:04d}.png"
             scene.render.filepath = os.path.join(output_dir, filename)
 
             bpy.ops.render.render(write_still=True)
