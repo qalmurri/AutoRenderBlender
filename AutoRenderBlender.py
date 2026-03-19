@@ -7,11 +7,12 @@ output_dir = scene.render.filepath
 
 # 5 directions
 directions = {
-    "N": -270,
-    "NE": -225,
+    # Optional, check Z rotating camera.
+    "N": -90,
+    "NE": -135,
     "E": -180,
-    "SE": -135,
-    "S": -90,
+    "SE": -225,
+    "S": -270,
 }
 
 # Parts inside armature
@@ -26,16 +27,13 @@ parts = [
     "Bag",
 ]
 
-armature = bpy.context.active_object
-if armature is None:
+frame_count = scene.frame_end - scene.frame_start + 1
+
+obj = bpy.context.active_object
+if obj is None:
     raise Exception("Select the Armature object")
 
-if armature.animation_data is None:
-    armature.animation_data_create()
-
-anim_data = armature.animation_data
-
-original_rotation = armature.rotation_euler.copy()
+original_rotation = obj.rotation_euler.copy()
 
 # Store visibility state
 original_visibility = {}
@@ -44,63 +42,47 @@ for p in parts:
     if part_obj:
         original_visibility[p] = part_obj.hide_render
 
-# 🔥 LOOP SEMUA ACTION
-for action in bpy.data.actions:
+frame_global = 1
 
-    print(f"Rendering action: {action.name}")
+for part in parts:
 
-    anim_data.action = action
+    part_obj = bpy.data.objects.get(part)
+    if part_obj is None:
+        print(f"{part} not found, skipping")
+        continue
 
-    # Gunakan frame range dari action
-    frame_start = int(action.frame_range[0])
-    frame_end = int(action.frame_range[1])
+    # Hide all parts
+    for p in parts:
+        o = bpy.data.objects.get(p)
+        if o:
+            o.hide_render = True
 
-    # Reset frame
-    scene.frame_set(frame_start)
+    # Show only current part
+    part_obj.hide_render = False
 
-    frame_global = 1
+    for dir_name, angle in directions.items():
 
-    for part in parts:
+        obj.rotation_euler[2] = math.radians(angle)
 
-        part_obj = bpy.data.objects.get(part)
-        if part_obj is None:
-            print(f"{part} not found, skipping")
-            continue
+        for frame in range(scene.frame_start, scene.frame_end + 1):
 
-        # Hide semua part
-        for p in parts:
-            o = bpy.data.objects.get(p)
-            if o:
-                o.hide_render = True
+            scene.frame_set(frame)
 
-        # Show hanya part ini
-        part_obj.hide_render = False
+            # filename = f"{part}_{dir_name}_{frame_global:04d}.png"
+            filename = f"{part}_{frame_global:04d}.png"
+            scene.render.filepath = os.path.join(output_dir, filename)
 
-        for dir_name, angle in directions.items():
+            bpy.ops.render.render(write_still=True)
 
-            armature.rotation_euler[2] = math.radians(angle)
-
-            for frame in range(frame_start, frame_end + 1):
-
-                scene.frame_set(frame)
-
-                # filename = f"{action.name}_{part}_{dir_name}_{frame_global:04d}.png"
-                filename = f"{action.name}_{part}_{frame_global:04d}.png"
-                scene.render.filepath = os.path.join(output_dir, filename)
-
-                bpy.ops.render.render(write_still=True)
-
-                frame_global += 1
+            frame_global += 1
 
 # restore rotation
-armature.rotation_euler = original_rotation
+obj.rotation_euler = original_rotation
 
 # restore visibility
 for p, vis in original_visibility.items():
-    part_obj = bpy.data.objects.get(p)
-    if part_obj:
-        part_obj.hide_render = vis
+    obj = bpy.data.objects.get(p)
+    if obj:
+        obj.hide_render = vis
 
 scene.render.filepath = output_dir
-
-print("✅ Render selesai tanpa merusak animasi lain.")
