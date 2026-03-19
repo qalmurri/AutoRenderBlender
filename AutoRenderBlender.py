@@ -7,11 +7,11 @@ output_dir = scene.render.filepath
 
 # 5 directions
 directions = {
-    "N": -90,
-    "NE": -135,
+    "N": -270,
+    "NE": -225,
     "E": -180,
-    "SE": -225,
-    "S": -270,
+    "SE": -135,
+    "S": -90,
 }
 
 # Parts inside armature
@@ -84,7 +84,8 @@ for action in bpy.data.actions:
 
                 scene.frame_set(frame)
 
-                filename = f"{action.name}_{part}_{dir_name}_{frame_global:04d}.png"
+                # filename = f"{action.name}_{part}_{dir_name}_{frame_global:04d}.png"
+                filename = f"{action.name}_{part}_{frame_global:04d}.png"
                 scene.render.filepath = os.path.join(output_dir, filename)
 
                 bpy.ops.render.render(write_still=True)
